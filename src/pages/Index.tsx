@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart, PieChart, CheckCircle, XCircle, AlertTriangle, Mail, ArrowRight } from 'lucide-react';
+import { BarChart, CheckCircle, XCircle, AlertTriangle, Mail, ArrowRight, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getValidationHistory } from '@/services/emailValidation';
@@ -11,8 +11,8 @@ const Index = () => {
   const [recentValidations, setRecentValidations] = React.useState<any[]>([]);
   const [stats, setStats] = React.useState({
     total: 0,
-    valid: 0,
-    invalid: 0,
+    passing: 0,
+    failing: 0,
     avgScore: 0,
   });
   const [loading, setLoading] = React.useState(true);
@@ -24,13 +24,13 @@ const Index = () => {
         
         // Calculate statistics
         const total = history.length;
-        const valid = history.filter(item => item.result.isValid).length;
-        const invalid = total - valid;
+        const passing = history.filter(item => item.result.isValid).length;
+        const failing = total - passing;
         const avgScore = total > 0 
           ? Math.round(history.reduce((sum, item) => sum + item.result.score, 0) / total) 
           : 0;
         
-        setStats({ total, valid, invalid, avgScore });
+        setStats({ total, passing, failing, avgScore });
         
         // Get most recent validations (up to 5)
         setRecentValidations(history.slice(-5).reverse());
@@ -47,18 +47,28 @@ const Index = () => {
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
+    if (score >= 70) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const truncateEmail = (email: string, maxLength = 50) => {
+    if (email.length <= maxLength) return email;
+    return email.substring(0, maxLength) + '...';
   };
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight">Email QC Dashboard</h1>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Air Travel Claim QC Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
+              Quality check emails before sending to clients and airlines
+            </p>
+          </div>
           <Button asChild>
             <Link to="/validate">
-              Validate New Email <ArrowRight className="ml-2 h-4 w-4" />
+              Check New Email <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </div>
@@ -67,7 +77,7 @@ const Index = () => {
         <div className="grid md:grid-cols-4 grid-cols-2 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Total Validations</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Emails Checked</CardTitle>
               <Mail className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -75,37 +85,37 @@ const Index = () => {
                 {loading ? <span className="animate-pulse">...</span> : stats.total}
               </div>
               <p className="text-xs text-muted-foreground">
-                All-time validations
+                All-time email quality checks
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Valid Emails</CardTitle>
+              <CardTitle className="text-sm font-medium">Passing QC</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {loading ? <span className="animate-pulse">...</span> : stats.valid}
+                {loading ? <span className="animate-pulse">...</span> : stats.passing}
               </div>
               <p className="text-xs text-muted-foreground">
-                {stats.total > 0 ? `${Math.round((stats.valid / stats.total) * 100)}% of total` : '0% of total'}
+                {stats.total > 0 ? `${Math.round((stats.passing / stats.total) * 100)}% of total` : '0% of total'}
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Invalid Emails</CardTitle>
+              <CardTitle className="text-sm font-medium">Needs Improvement</CardTitle>
               <XCircle className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {loading ? <span className="animate-pulse">...</span> : stats.invalid}
+                {loading ? <span className="animate-pulse">...</span> : stats.failing}
               </div>
               <p className="text-xs text-muted-foreground">
-                {stats.total > 0 ? `${Math.round((stats.invalid / stats.total) * 100)}% of total` : '0% of total'}
+                {stats.total > 0 ? `${Math.round((stats.failing / stats.total) * 100)}% of total` : '0% of total'}
               </p>
             </CardContent>
           </Card>
@@ -129,9 +139,9 @@ const Index = () => {
         {/* Recent Validations */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Validations</CardTitle>
+            <CardTitle>Recent Email Checks</CardTitle>
             <CardDescription>
-              Your most recent email quality checks
+              Your most recent email quality reviews
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -152,7 +162,7 @@ const Index = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="pb-2 text-left font-medium">Email</th>
+                      <th className="pb-2 text-left font-medium">Email Preview</th>
                       <th className="pb-2 text-center font-medium">Status</th>
                       <th className="pb-2 text-center font-medium">Score</th>
                       <th className="pb-2 text-right font-medium">Date</th>
@@ -161,12 +171,21 @@ const Index = () => {
                   <tbody>
                     {recentValidations.map((validation, index) => (
                       <tr key={index} className="border-b last:border-0">
-                        <td className="py-3 text-left">{validation.email}</td>
+                        <td className="py-3 text-left">
+                          <div className="flex items-center">
+                            <FileText className="h-4 w-4 text-gray-400 mr-2" />
+                            {truncateEmail(validation.email)}
+                          </div>
+                        </td>
                         <td className="py-3 text-center">
                           {validation.result.isValid ? (
-                            <span className="status-badge-success">Valid</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Passed
+                            </span>
                           ) : (
-                            <span className="status-badge-error">Invalid</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Needs Work
+                            </span>
                           )}
                         </td>
                         <td className="py-3 text-center">
@@ -185,10 +204,10 @@ const Index = () => {
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No validation history yet.</p>
+                <p>No email QC history yet.</p>
                 <p className="mt-2">
-                  <Link to="/validate" className="text-email-primary hover:underline">
-                    Start validating emails
+                  <Link to="/validate" className="text-blue-600 hover:underline">
+                    Start checking emails
                   </Link>
                 </p>
               </div>
@@ -198,16 +217,16 @@ const Index = () => {
         
         {/* Get Started Box (for new users) */}
         {stats.total === 0 && !loading && (
-          <Card className="bg-gradient-to-br from-email-light to-white">
+          <Card className="bg-gradient-to-br from-blue-50 to-white">
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
-                <h3 className="text-xl font-bold">Welcome to Email QC!</h3>
+                <h3 className="text-xl font-bold">Welcome to Air Travel Claim Email QC!</h3>
                 <p className="text-gray-600 max-w-md mx-auto">
-                  Start by validating your first email to check its quality, deliverability, and compliance with best practices.
+                  Start by checking your first email to ensure it meets quality standards for structure, tone, clarity, and completeness before sending to clients.
                 </p>
                 <Button asChild className="mt-4">
                   <Link to="/validate">
-                    Validate Your First Email <ArrowRight className="ml-2 h-4 w-4" />
+                    Check Your First Email <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>

@@ -1,31 +1,32 @@
+
 import React, { useState } from 'react';
-import { Mail, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Mail, CheckCircle, XCircle, AlertTriangle, Loader2, FileText, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { validateEmail, saveValidationHistory, ValidationResult } from '@/services/emailValidation';
+import { validateEmail, saveValidationHistory, ValidationResult, emailTemplates } from '@/services/emailValidation';
 import MainLayout from '@/components/layout/MainLayout';
 
 const ValidateEmail = () => {
-  const [email, setEmail] = useState('');
+  const [emailContent, setEmailContent] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const { toast } = useToast();
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+  const handleEmailChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEmailContent(e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim()) {
+    if (!emailContent.trim()) {
       toast({
-        title: "Email Required",
-        description: "Please enter an email address to validate.",
+        title: "Email Content Required",
+        description: "Please enter email content to validate.",
         variant: "destructive",
       });
       return;
@@ -35,18 +36,18 @@ const ValidateEmail = () => {
     setValidationResult(null);
     
     try {
-      const result = await validateEmail(email.trim());
+      const result = await validateEmail(emailContent.trim());
       setValidationResult(result);
       
       // Save to history
-      await saveValidationHistory(email.trim(), result);
+      await saveValidationHistory(emailContent.trim(), result);
       
       // Show toast notification
       toast({
-        title: result.isValid ? "Valid Email" : "Invalid Email",
+        title: result.isValid ? "Good Quality Email" : "Email Needs Improvement",
         description: result.isValid 
-          ? `The email "${email}" passed validation with a score of ${result.score}/100.` 
-          : `The email "${email}" failed validation with a score of ${result.score}/100.`,
+          ? `The email passed quality check with a score of ${result.score}/100.` 
+          : `The email needs improvement with a score of ${result.score}/100.`,
         variant: result.isValid ? "default" : "destructive",
       });
       
@@ -64,14 +65,15 @@ const ValidateEmail = () => {
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "bg-green-500";
-    if (score >= 60) return "bg-yellow-500";
+    if (score >= 70) return "bg-yellow-500";
     return "bg-red-500";
   };
 
   const getScoreText = (score: number) => {
     if (score >= 80) return "Excellent";
-    if (score >= 60) return "Good";
-    if (score >= 40) return "Fair";
+    if (score >= 70) return "Good";
+    if (score >= 60) return "Fair";
+    if (score >= 50) return "Needs Improvement";
     return "Poor";
   };
 
@@ -81,45 +83,87 @@ const ValidateEmail = () => {
       : <XCircle className="h-5 w-5 text-red-500" />;
   };
 
+  const loadTemplate = (template: keyof typeof emailTemplates) => {
+    setEmailContent(emailTemplates[template]);
+    toast({
+      title: "Template Loaded",
+      description: "You can now edit the template before validating.",
+    });
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(emailContent);
+    toast({
+      title: "Copied to Clipboard",
+      description: "Email content has been copied to your clipboard.",
+    });
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Validate Email</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Email QC Check</h1>
           <p className="text-muted-foreground mt-2">
-            Check email quality, deliverability, and compliance with best practices.
+            Analyze and improve emails sent to clients and airlines before sending.
           </p>
         </div>
         
         <Card>
           <CardHeader>
-            <CardTitle>Email Validation</CardTitle>
+            <CardTitle>Email Content</CardTitle>
             <CardDescription>
-              Enter an email address to validate its quality and deliverability.
+              Enter the email content you want to validate for quality and compliance.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <div className="text-sm font-medium mb-2">Load Template:</div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => loadTemplate('update')}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Update Template
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => loadTemplate('received')}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Documents Received
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => loadTemplate('payment')}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Payment Update
+                </Button>
+              </div>
+            </div>
+            
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-grow">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="email"
-                    placeholder="Enter email address"
-                    value={email}
-                    onChange={handleEmailChange}
-                    className="pl-10"
-                    disabled={isValidating}
-                  />
-                </div>
-                <Button type="submit" disabled={isValidating || !email.trim()}>
+              <div className="relative">
+                <Textarea
+                  placeholder="Paste or type email content here..."
+                  value={emailContent}
+                  onChange={handleEmailChange}
+                  className="min-h-[200px] font-mono text-sm"
+                  disabled={isValidating}
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="absolute right-2 top-2"
+                  onClick={copyToClipboard}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button type="submit" disabled={isValidating || !emailContent.trim()}>
                   {isValidating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Validating...
+                      Analyzing...
                     </>
                   ) : (
-                    'Validate Email'
+                    'Check Email Quality'
                   )}
                 </Button>
               </div>
@@ -131,10 +175,10 @@ const ValidateEmail = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Loader2 className="h-12 w-12 animate-spin text-email-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Validating Email</h3>
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Analyzing Email</h3>
                 <p className="text-muted-foreground max-w-md">
-                  We're checking format, DNS records, deliverability, and more...
+                  We're checking structure, tone, clarity, grammar, and more...
                 </p>
               </div>
             </CardContent>
@@ -156,12 +200,12 @@ const ValidateEmail = () => {
                     {validationResult.isValid ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Email is Valid</span>
+                        <span>Email Meets Quality Standards</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Email is Invalid</span>
+                        <span>Email Needs Improvement</span>
                       </>
                     )}
                   </CardTitle>
@@ -186,9 +230,9 @@ const ValidateEmail = () => {
                   <div className="rounded-lg bg-muted p-4">
                     <h4 className="font-medium mb-2">Summary</h4>
                     <p className="text-sm text-muted-foreground">
-                      {email} {validationResult.isValid 
-                        ? "is a valid email address that meets quality standards." 
-                        : "has quality issues that may affect deliverability."
+                      {validationResult.isValid 
+                        ? "This email meets the quality standards for customer communication. It uses appropriate structure, tone, and contains all necessary information." 
+                        : "This email needs improvement in some areas to meet quality standards for customer communication."
                       }
                     </p>
                     {validationResult.suggestions && validationResult.suggestions.length > 0 && (
@@ -207,51 +251,67 @@ const ValidateEmail = () => {
             <TabsContent value="details" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Validation Details</CardTitle>
+                  <CardTitle>Quality Check Details</CardTitle>
                   <CardDescription>
-                    Detailed results of each validation check
+                    Detailed results of each quality check
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-4">
                     <li className="flex items-center justify-between p-3 rounded-md bg-muted">
                       <div>
-                        <h4 className="font-medium">Email Format</h4>
-                        <p className="text-sm text-muted-foreground">Checks if the email follows the correct syntax</p>
+                        <h4 className="font-medium">Email Structure</h4>
+                        <p className="text-sm text-muted-foreground">Proper greeting, body, and closing</p>
                       </div>
-                      {getStatusIcon(validationResult.details.format)}
+                      {getStatusIcon(validationResult.details.structure)}
                     </li>
                     
                     <li className="flex items-center justify-between p-3 rounded-md bg-muted">
                       <div>
-                        <h4 className="font-medium">DNS Records</h4>
-                        <p className="text-sm text-muted-foreground">Verifies if the domain exists and has valid DNS records</p>
+                        <h4 className="font-medium">Clarity & Conciseness</h4>
+                        <p className="text-sm text-muted-foreground">Clear language with appropriate sentence length</p>
                       </div>
-                      {getStatusIcon(validationResult.details.dns)}
+                      {getStatusIcon(validationResult.details.clarity)}
                     </li>
                     
                     <li className="flex items-center justify-between p-3 rounded-md bg-muted">
                       <div>
-                        <h4 className="font-medium">Disposable Email</h4>
-                        <p className="text-sm text-muted-foreground">Checks if the email is from a disposable provider</p>
+                        <h4 className="font-medium">Tone & Empathy</h4>
+                        <p className="text-sm text-muted-foreground">Professional and customer-focused language</p>
                       </div>
-                      {getStatusIcon(!validationResult.details.disposable)}
+                      {getStatusIcon(validationResult.details.tone)}
                     </li>
                     
                     <li className="flex items-center justify-between p-3 rounded-md bg-muted">
                       <div>
-                        <h4 className="font-medium">Spam Patterns</h4>
-                        <p className="text-sm text-muted-foreground">Examines if the email contains spam-like patterns</p>
+                        <h4 className="font-medium">Grammar & Spelling</h4>
+                        <p className="text-sm text-muted-foreground">Correct grammar, spelling, and punctuation</p>
                       </div>
-                      {getStatusIcon(!validationResult.details.spam)}
+                      {getStatusIcon(validationResult.details.grammar)}
                     </li>
                     
                     <li className="flex items-center justify-between p-3 rounded-md bg-muted">
                       <div>
-                        <h4 className="font-medium">Deliverability</h4>
-                        <p className="text-sm text-muted-foreground">Assesses if the email is likely to be deliverable</p>
+                        <h4 className="font-medium">Completeness</h4>
+                        <p className="text-sm text-muted-foreground">Includes all necessary information</p>
                       </div>
-                      {getStatusIcon(validationResult.details.deliverable)}
+                      {getStatusIcon(validationResult.details.completeness)}
+                    </li>
+                    
+                    <li className="flex items-center justify-between p-3 rounded-md bg-muted">
+                      <div>
+                        <h4 className="font-medium">Personalization</h4>
+                        <p className="text-sm text-muted-foreground">Customized to the specific customer and claim</p>
+                      </div>
+                      {getStatusIcon(validationResult.details.personalization)}
+                    </li>
+                    
+                    <li className="flex items-center justify-between p-3 rounded-md bg-muted">
+                      <div>
+                        <h4 className="font-medium">Branding Consistency</h4>
+                        <p className="text-sm text-muted-foreground">Proper company representation and signature</p>
+                      </div>
+                      {getStatusIcon(validationResult.details.branding)}
                     </li>
                   </ul>
                 </CardContent>
@@ -281,7 +341,7 @@ const ValidateEmail = () => {
                       <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
                       <h3 className="text-lg font-medium mb-2">No Issues Found</h3>
                       <p className="text-muted-foreground max-w-md mx-auto">
-                        This email address meets all quality standards and best practices. No improvements needed.
+                        This email meets all quality standards and best practices. No improvements needed.
                       </p>
                     </div>
                   )}

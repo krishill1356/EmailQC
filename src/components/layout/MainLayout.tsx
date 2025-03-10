@@ -13,8 +13,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200">
         <div className="flex items-center h-16 px-6 border-b border-gray-200">
-          <Mail className="h-6 w-6 text-email-primary mr-2" />
-          <span className="text-xl font-bold text-gray-900">Email QC</span>
+          <Mail className="h-6 w-6 text-blue-600 mr-2" />
+          <span className="text-xl font-bold text-gray-900">Air Travel Claim QC</span>
         </div>
         <nav className="flex-1 py-4 px-3 space-y-1">
           <Link to="/" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-900 bg-gray-100">
@@ -23,11 +23,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </Link>
           <Link to="/validate" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
             <CheckCircle className="mr-3 h-5 w-5 text-gray-500" />
-            Validate Email
+            Email QC Check
           </Link>
           <Link to="/history" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
             <AlertCircle className="mr-3 h-5 w-5 text-gray-500" />
-            Validation History
+            QC History
           </Link>
           <Link to="/analytics" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
             <BarChart2 className="mr-3 h-5 w-5 text-gray-500" />
@@ -43,8 +43,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-white w-full fixed top-0 left-0 right-0 z-10">
         <div className="flex items-center">
-          <Mail className="h-6 w-6 text-email-primary mr-2" />
-          <span className="text-xl font-bold text-gray-900">Email QC</span>
+          <Mail className="h-6 w-6 text-blue-600 mr-2" />
+          <span className="text-xl font-bold text-gray-900">Air Travel Claim QC</span>
         </div>
         <nav className="flex space-x-4">
           <Link to="/" className="text-gray-500 hover:text-gray-900">
