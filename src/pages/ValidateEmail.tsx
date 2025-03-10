@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Mail, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
