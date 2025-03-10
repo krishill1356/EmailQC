@@ -21,8 +21,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<ValidateEmail />} />
-          <Route path="/validate" element={<Navigate to="/" replace />} />
           <Route path="/dashboard" element={<Index />} />
+          <Route path="/validate" element={<ValidateEmail />} />
           <Route path="/history" element={<ValidationHistory />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings" element={<Settings />} />
