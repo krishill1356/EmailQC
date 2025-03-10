@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Mail, CheckCircle, AlertCircle, Settings, Home, BarChart2 } from 'lucide-react';
 
 type MainLayoutProps = {
@@ -8,6 +8,8 @@ type MainLayoutProps = {
 };
 
 const MainLayout = ({ children }: MainLayoutProps) => {
+  const location = useLocation();
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
@@ -17,23 +19,48 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xl font-bold text-gray-900">Air Travel Claim QC</span>
         </div>
         <nav className="flex-1 py-4 px-3 space-y-1">
-          <Link to="/" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-900 bg-gray-100">
-            <Home className="mr-3 h-5 w-5 text-gray-500" />
-            Dashboard
-          </Link>
-          <Link to="/validate" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
+          <Link 
+            to="/" 
+            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+              location.pathname === '/' ? 'text-gray-900 bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
             <CheckCircle className="mr-3 h-5 w-5 text-gray-500" />
             Email QC Check
           </Link>
-          <Link to="/history" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
+          <Link 
+            to="/dashboard" 
+            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+              location.pathname === '/dashboard' ? 'text-gray-900 bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Home className="mr-3 h-5 w-5 text-gray-500" />
+            Dashboard
+          </Link>
+          <Link 
+            to="/history" 
+            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+              location.pathname === '/history' ? 'text-gray-900 bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
             <AlertCircle className="mr-3 h-5 w-5 text-gray-500" />
             QC History
           </Link>
-          <Link to="/analytics" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
+          <Link 
+            to="/analytics" 
+            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+              location.pathname === '/analytics' ? 'text-gray-900 bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
             <BarChart2 className="mr-3 h-5 w-5 text-gray-500" />
             Analytics
           </Link>
-          <Link to="/settings" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
+          <Link 
+            to="/settings" 
+            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+              location.pathname === '/settings' ? 'text-gray-900 bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
             <Settings className="mr-3 h-5 w-5 text-gray-500" />
             Settings
           </Link>
@@ -47,16 +74,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xl font-bold text-gray-900">Air Travel Claim QC</span>
         </div>
         <nav className="flex space-x-4">
-          <Link to="/" className="text-gray-500 hover:text-gray-900">
-            <Home className="h-6 w-6" />
-          </Link>
-          <Link to="/validate" className="text-gray-500 hover:text-gray-900">
+          <Link to="/" className={`${location.pathname === '/' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}>
             <CheckCircle className="h-6 w-6" />
           </Link>
-          <Link to="/history" className="text-gray-500 hover:text-gray-900">
+          <Link to="/dashboard" className={`${location.pathname === '/dashboard' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}>
+            <Home className="h-6 w-6" />
+          </Link>
+          <Link to="/history" className={`${location.pathname === '/history' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}>
             <AlertCircle className="h-6 w-6" />
           </Link>
-          <Link to="/settings" className="text-gray-500 hover:text-gray-900">
+          <Link to="/settings" className={`${location.pathname === '/settings' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}>
             <Settings className="h-6 w-6" />
           </Link>
         </nav>
