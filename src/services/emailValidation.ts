@@ -3,46 +3,58 @@ export interface ValidationResult {
   isValid: boolean;
   score: number;
   details: {
-    structure: boolean;
-    clarity: boolean;
-    tone: boolean;
-    grammar: boolean;
-    completeness: boolean;
-    personalization: boolean;
-    branding: boolean;
+    spelling: { score: number; feedback: string; };
+    tone: { score: number; feedback: string; };
+    structure: { score: number; feedback: string; };
+    similarity: { score: number; feedback: string; };
   };
   suggestions?: string[];
-  errors?: string[];
+  totalScore: number; // Out of 10
 }
 
-// Check if email has proper structure (greeting, body, closing)
-const validateStructure = (email: string): boolean => {
-  // Check for greeting, body paragraphs, and closing signature
-  const hasGreeting = /^(Dear|Hello|Hi|Good morning|Good afternoon|Good evening)/im.test(email);
-  const hasClosing = /(Thank you|Thanks|Best regards|Sincerely|Kind regards|Regards)/im.test(email);
-  const hasMultipleParagraphs = email.split('\n\n').length >= 2;
-  
-  return hasGreeting && hasClosing && hasMultipleParagraphs;
-};
-
-// Check for clarity and conciseness
-const validateClarity = (email: string): boolean => {
-  // Check for overly long sentences
-  const sentences = email.match(/[^.!?]+[.!?]+/g) || [];
-  const longSentences = sentences.filter(s => s.split(' ').length > 25).length;
-  
-  // Check for complex words and jargon
-  const complexWords = [
-    'utilize', 'implementation', 'subsequently', 'aforementioned', 
-    'nevertheless', 'notwithstanding', 'endeavor'
+// Check for spelling, punctuation, and grammar
+const validateSpelling = (email: string): { score: number; feedback: string; } => {
+  // Check for common spelling mistakes
+  const commonErrors = [
+    'their is', 'there are', 'your welcome', 'it\'s self', 'alot', 
+    'seperate', 'definately', 'recieve', 'accomodate', 'occured'
   ];
-  const hasComplexWords = complexWords.some(word => new RegExp(`\\b${word}\\b`, 'i').test(email));
   
-  return longSentences <= 2 && !hasComplexWords;
+  const hasGrammarErrors = commonErrors.some(error => 
+    new RegExp(`\\b${error}\\b`, 'i').test(email)
+  );
+  
+  // Check for double spaces and repeated words
+  const hasDoubleSpaces = email.includes('  ');
+  const hasRepeatedWords = /\b(\w+)\s+\1\b/i.test(email);
+  
+  // Check for proper punctuation
+  const sentences = email.match(/[^.!?]+[.!?]+/g) || [];
+  const missingPunctuation = sentences.some(s => !s.trim().match(/[.!?]$/));
+  
+  let score = 2.5;
+  let feedback = "Excellent spelling, punctuation, and grammar throughout the email.";
+  
+  if (hasGrammarErrors) {
+    score -= 1;
+    feedback = "There are some spelling or grammar errors that need correction.";
+  }
+  
+  if (hasDoubleSpaces || hasRepeatedWords) {
+    score -= 0.5;
+    feedback = "Check for formatting issues like double spaces or repeated words.";
+  }
+  
+  if (missingPunctuation) {
+    score -= 0.5;
+    feedback = "Some sentences are missing proper punctuation.";
+  }
+  
+  return { score, feedback };
 };
 
 // Check for professional and empathetic tone
-const validateTone = (email: string): boolean => {
+const validateTone = (email: string): { score: number; feedback: string; } => {
   // Check for negative or unprofessional terms
   const negativeTerms = [
     'unfortunately', 'regret to inform', 'impossible', 'cannot', 'refuse', 
@@ -67,101 +79,151 @@ const validateTone = (email: string): boolean => {
     return count + matches.length;
   }, 0);
   
-  return negativeCount <= 2 && positiveCount >= 2;
+  let score = 2.5;
+  let feedback = "Excellent tone balancing professionalism and empathy.";
+  
+  if (negativeCount > 2) {
+    score -= negativeCount * 0.2;
+    feedback = "The tone contains too many negative expressions which may impact customer experience.";
+  }
+  
+  if (positiveCount < 2) {
+    score -= (2 - positiveCount) * 0.3;
+    feedback = "Include more positive and empathetic language to enhance customer experience.";
+  }
+  
+  // Check if the tone is overly formal or informal
+  const formalMarkers = /pursuant to|aforementioned|herewith|heretofore|hereby/gi;
+  const informalMarkers = /hey there|cheers|btw|cool|awesome|gonna|wanna/gi;
+  
+  const formalMatches = (email.match(formalMarkers) || []).length;
+  const informalMatches = (email.match(informalMarkers) || []).length;
+  
+  if (formalMatches > 2) {
+    score -= 0.5;
+    feedback = "The tone is overly formal. Consider a more balanced approach.";
+  }
+  
+  if (informalMatches > 2) {
+    score -= 0.5;
+    feedback = "The tone is too casual for a professional email.";
+  }
+  
+  return { score: Math.max(0, score), feedback };
 };
 
-// Check for grammar and spelling
-const validateGrammar = (email: string): boolean => {
-  // Simple grammar checks (very basic implementation)
-  const commonErrors = [
-    'their is', 'there are', 'your welcome', 'it\'s self', 'alot', 
-    'seperate', 'definately', 'recieve', 'accomodate', 'occured'
+// Check for proper welcome and sign off
+const validateStructure = (email: string): { score: number; feedback: string; } => {
+  // Check for greeting
+  const hasGreeting = /^(Dear|Hello|Hi|Good morning|Good afternoon|Good evening)/im.test(email);
+  
+  // Check for closing
+  const hasClosing = /(Thank you|Thanks|Best regards|Sincerely|Kind regards|Regards)/im.test(email);
+  
+  // Check for proper paragraphs
+  const hasMultipleParagraphs = email.split('\n\n').length >= 2;
+  
+  // Check for customer name in greeting
+  const hasCustomerName = /\b(mr|mrs|ms|miss|dr)\b|dear\s+\w+/i.test(email);
+  
+  let score = 2.5;
+  let feedback = "Excellent structure with proper greeting and sign-off.";
+  
+  if (!hasGreeting) {
+    score -= 1;
+    feedback = "Missing a proper greeting at the start of the email.";
+  }
+  
+  if (!hasClosing) {
+    score -= 1;
+    feedback = "Missing a professional sign-off at the end of the email.";
+  }
+  
+  if (!hasMultipleParagraphs) {
+    score -= 0.5;
+    feedback = "Email should be structured with clear paragraphs for better readability.";
+  }
+  
+  if (!hasCustomerName) {
+    score -= 0.5;
+    feedback = "Consider personalizing the greeting with the customer's name.";
+  }
+  
+  return { score: Math.max(0, score), feedback };
+};
+
+// Check similarity to templates
+const validateSimilarity = (email: string): { score: number; feedback: string; } => {
+  // Key phrases that should be included from templates
+  const keyPhrases = [
+    "thank you for choosing air travel claim",
+    "please be assured",
+    "we will keep you informed",
+    "for more information",
+    "please be aware that the time it takes to settle your claim",
+    "we are continuously working",
   ];
   
-  const hasGrammarErrors = commonErrors.some(error => 
-    new RegExp(`\\b${error}\\b`, 'i').test(email)
+  // Count how many key phrases are included
+  const matchedPhrases = keyPhrases.filter(phrase => 
+    email.toLowerCase().includes(phrase.toLowerCase())
   );
   
-  // Check for double spaces and repeated words
-  const hasDoubleSpaces = email.includes('  ');
-  const hasRepeatedWords = /\b(\w+)\s+\1\b/i.test(email);
-  
-  return !hasGrammarErrors && !hasDoubleSpaces && !hasRepeatedWords;
-};
-
-// Check for completeness and necessary information
-const validateCompleteness = (email: string): boolean => {
-  // Check for key claim information markers
+  // Check if the email includes claim or booking reference
   const hasClaimReference = /claim\s+reference|reference\s+number|booking\s+reference/i.test(email);
+  
+  // Check if the email includes next steps
   const hasNextSteps = /next\s+steps|following\s+steps|what\s+happens\s+next|we\s+will|our\s+team\s+will/i.test(email);
-  const hasContactInfo = /contact|reach\s+us|call|phone|email|support@|questions/i.test(email);
   
-  return hasClaimReference && hasNextSteps && hasContactInfo;
-};
-
-// Check for personalization
-const validatePersonalization = (email: string): boolean => {
-  // Check for customer name and specific claim details
-  const hasCustomerName = /\b(mr|mrs|ms|miss|dr)\b|dear\s+\w+/i.test(email);
-  const hasSpecificDetails = /your\s+(claim|flight|booking|case|request)/i.test(email);
+  let score = 2.5;
+  let feedback = "Excellent consistency with company templates while maintaining personalization.";
   
-  return hasCustomerName && hasSpecificDetails;
-};
-
-// Check for consistent branding
-const validateBranding = (email: string): boolean => {
-  // Check for Air Travel Claim branding elements
-  const hasCompanyName = /air\s+travel\s+claim/i.test(email);
-  const hasSignature = /thank\s+you\s+for\s+choosing\s+air\s+travel\s+claim/i.test(email);
+  // Score based on matched phrases
+  if (matchedPhrases.length < 3) {
+    score -= (3 - matchedPhrases.length) * 0.3;
+    feedback = "The email is missing key phrases used in our standard templates.";
+  }
   
-  return hasCompanyName && hasSignature;
+  if (!hasClaimReference) {
+    score -= 0.5;
+    feedback = "Include a reference to the customer's claim or booking number.";
+  }
+  
+  if (!hasNextSteps) {
+    score -= 0.5;
+    feedback = "Make sure to outline the next steps or what the customer can expect.";
+  }
+  
+  return { score: Math.max(0, score), feedback };
 };
 
 // Calculate overall quality score
 const calculateScore = (details: ValidationResult['details']): number => {
-  let score = 0;
+  const totalPoints = details.spelling.score + details.tone.score + 
+                      details.structure.score + details.similarity.score;
   
-  if (details.structure) score += 15;
-  if (details.clarity) score += 15;
-  if (details.tone) score += 15;
-  if (details.grammar) score += 15;
-  if (details.completeness) score += 15;
-  if (details.personalization) score += 15;
-  if (details.branding) score += 10;
-  
-  return score;
+  // Convert to score out of 10
+  return Math.round((totalPoints / 10) * 10);
 };
 
 // Generate suggestions based on validation results
-const generateSuggestions = (email: string, details: ValidationResult['details']): string[] => {
+const generateSuggestions = (details: ValidationResult['details']): string[] => {
   const suggestions: string[] = [];
   
-  if (!details.structure) {
-    suggestions.push('Improve email structure by including a clear greeting, body with paragraphs, and professional closing.');
+  if (details.spelling.score < 2) {
+    suggestions.push(details.spelling.feedback);
   }
   
-  if (!details.clarity) {
-    suggestions.push('Enhance clarity by using shorter sentences and simpler language.');
+  if (details.tone.score < 2) {
+    suggestions.push(details.tone.feedback);
   }
   
-  if (!details.tone) {
-    suggestions.push('Adjust tone to be more positive and empathetic, focusing on solutions rather than problems.');
+  if (details.structure.score < 2) {
+    suggestions.push(details.structure.feedback);
   }
   
-  if (!details.grammar) {
-    suggestions.push('Review for grammar and spelling errors, including spacing and repeated words.');
-  }
-  
-  if (!details.completeness) {
-    suggestions.push('Include all necessary information: claim reference, next steps, and contact details.');
-  }
-  
-  if (!details.personalization) {
-    suggestions.push('Personalize the email with the customer\'s name and specific details about their claim.');
-  }
-  
-  if (!details.branding) {
-    suggestions.push('Incorporate consistent Air Travel Claim branding and standard signature.');
+  if (details.similarity.score < 2) {
+    suggestions.push(details.similarity.feedback);
   }
   
   return suggestions;
@@ -173,24 +235,22 @@ export const validateEmail = async (email: string): Promise<ValidationResult> =>
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   const details = {
-    structure: validateStructure(email),
-    clarity: validateClarity(email),
+    spelling: validateSpelling(email),
     tone: validateTone(email),
-    grammar: validateGrammar(email),
-    completeness: validateCompleteness(email),
-    personalization: validatePersonalization(email),
-    branding: validateBranding(email)
+    structure: validateStructure(email),
+    similarity: validateSimilarity(email)
   };
   
-  const score = calculateScore(details);
-  const isValid = score >= 70; // Consider valid if score is at least 70
-  const suggestions = generateSuggestions(email, details);
+  const totalScore = calculateScore(details);
+  const isValid = totalScore >= 7; // Consider valid if score is at least 7 out of 10
+  const suggestions = generateSuggestions(details);
   
   return {
     isValid,
-    score,
+    score: Math.min(100, totalScore * 10), // For backward compatibility
     details,
     suggestions: suggestions.length > 0 ? suggestions : undefined,
+    totalScore
   };
 };
 
