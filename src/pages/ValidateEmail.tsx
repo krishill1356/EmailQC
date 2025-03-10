@@ -1,12 +1,13 @@
+
 import React, { useState, useCallback } from 'react';
-import { Mail, CheckCircle, XCircle, AlertTriangle, Loader2, FileText, Copy, Upload } from 'lucide-react';
+import { Mail, CheckCircle, XCircle, AlertTriangle, Loader2, Upload, Copy, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { validateEmail, saveValidationHistory, ValidationResult, emailTemplates } from '@/services/emailValidation';
+import { validateEmail, saveValidationHistory, ValidationResult } from '@/services/emailValidation';
 import MainLayout from '@/components/layout/MainLayout';
 import { cn } from "@/lib/utils";
 
@@ -83,14 +84,6 @@ const ValidateEmail = () => {
     return Math.round((score / 2.5) * 10) / 10;
   };
 
-  const loadTemplate = (template: keyof typeof emailTemplates) => {
-    setEmailContent(emailTemplates[template]);
-    toast({
-      title: "Template Loaded",
-      description: "You can now edit the template before validating.",
-    });
-  };
-
   const copyToClipboard = () => {
     navigator.clipboard.writeText(emailContent);
     toast({
@@ -115,20 +108,52 @@ const ValidateEmail = () => {
     setIsDragging(false);
     
     const files = e.dataTransfer.files;
-    if (files.length) {
+    if (files && files.length > 0) {
+      const file = files[0];
       const reader = new FileReader();
+      
       reader.onload = (event) => {
         if (event.target && typeof event.target.result === 'string') {
           setEmailContent(event.target.result);
           toast({
             title: "Email Loaded",
-            description: "Email content has been loaded. You can now validate it.",
+            description: "Email content has been loaded from file. You can now validate it.",
           });
         }
       };
-      reader.readAsText(files[0]);
+      
+      reader.onerror = () => {
+        toast({
+          title: "Error Reading File",
+          description: "There was an error reading the file. Please try again.",
+          variant: "destructive",
+        });
+      };
+      
+      reader.readAsText(file);
     }
   }, [toast]);
+
+  // Handle file upload via input
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        if (event.target && typeof event.target.result === 'string') {
+          setEmailContent(event.target.result);
+          toast({
+            title: "Email Loaded",
+            description: "Email content has been loaded from file. You can now validate it.",
+          });
+        }
+      };
+      
+      reader.readAsText(file);
+    }
+  };
 
   const renderCriteriaCard = (title: string, description: string, score: number, feedback: string) => {
     const scoreOutOf10 = getCriteriaScore(score);
@@ -137,7 +162,7 @@ const ValidateEmail = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center justify-between">
             <span>{title}</span>
-            <span className={`px-2 py-1 rounded text-white text-sm ${getScoreColor(scoreOutOf10 * 2)}`}>
+            <span className={cn("px-2 py-1 rounded text-white text-sm", getScoreColor(scoreOutOf10 * 2))}>
               {scoreOutOf10}/2.5
             </span>
           </CardTitle>
@@ -168,29 +193,12 @@ const ValidateEmail = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
-              <div className="text-sm font-medium mb-2">Load Template:</div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => loadTemplate('update')}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Update Template
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => loadTemplate('received')}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Documents Received
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => loadTemplate('payment')}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Payment Update
-                </Button>
-              </div>
-            </div>
-            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div 
-                className={`relative border-2 border-dashed rounded-md ${
-                  isDragging ? 'border-primary bg-primary/10' : 'border-gray-300'
-                }`}
+                className={cn(
+                  "relative border-2 border-dashed rounded-md transition-colors", 
+                  isDragging ? "border-primary bg-primary/10" : "border-gray-300"
+                )}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -221,7 +229,22 @@ const ValidateEmail = () => {
                 </Button>
               </div>
               
-              <div className="flex justify-end">
+              <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+                <div>
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <Upload className="h-4 w-4" />
+                      <span>Upload email file</span>
+                    </div>
+                    <input 
+                      id="file-upload" 
+                      type="file" 
+                      accept=".txt,.md,.eml" 
+                      className="hidden" 
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                </div>
                 <Button type="submit" disabled={isValidating || !emailContent.trim()}>
                   {isValidating ? (
                     <>
@@ -249,6 +272,80 @@ const ValidateEmail = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+        
+        {!isValidating && !validationResult && (
+          <Tabs defaultValue="guidance" className="w-full">
+            <TabsList className="grid w-full grid-cols-1">
+              <TabsTrigger value="guidance">QC Guidance</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="guidance" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Info className="h-5 w-5 text-blue-500 mr-2" />
+                    <span>Email Quality Control Criteria</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Our email quality assessment is based on these key criteria
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium text-lg mb-2">1. Spelling, Punctuation & Grammar (2.5 points)</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Emails should be free of spelling errors, use correct punctuation, and follow proper grammar rules.
+                        Common errors to avoid include double spaces, repeated words, missing punctuation, and improper capitalization.
+                        Professionally written emails reflect attention to detail and company standards.
+                      </p>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium text-lg mb-2">2. Tone & Empathy (2.5 points)</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Communication should balance professionalism with empathy. Avoid negative expressions and use positive, supportive language.
+                        The tone should not be overly formal or informal, but appropriate for the context.
+                        Show understanding of the customer's situation and convey willingness to help.
+                      </p>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium text-lg mb-2">3. Welcome & Sign Off (2.5 points)</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Emails should begin with an appropriate greeting that includes the customer's name when possible.
+                        They should end with a professional sign-off such as "Thank you," "Best regards," or "Sincerely."
+                        The email should be structured with clear paragraphs for better readability.
+                      </p>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium text-lg mb-2">4. Template Consistency (2.5 points)</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Emails should include key phrases and information consistent with company templates.
+                        Reference to the customer's claim or booking number should be included when relevant.
+                        Next steps or what the customer can expect should be clearly outlined.
+                        The content should match approved company messaging while maintaining personalization.
+                      </p>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4 bg-muted">
+                      <h3 className="font-medium text-lg mb-2">Overall Score Interpretation</h3>
+                      <ul className="space-y-2 text-sm">
+                        <li><span className="font-medium">9-10:</span> Excellent - Meets all standards with minimal to no issues</li>
+                        <li><span className="font-medium">8-8.9:</span> Very Good - Meets most standards with minor issues</li>
+                        <li><span className="font-medium">7-7.9:</span> Good - Acceptable quality with some improvements needed</li>
+                        <li><span className="font-medium">6-6.9:</span> Fair - Multiple issues that need addressing</li>
+                        <li><span className="font-medium">5-5.9:</span> Needs Improvement - Significant issues affecting quality</li>
+                        <li><span className="font-medium">Below 5:</span> Poor - Major issues requiring immediate correction</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         )}
         
         {validationResult && (
@@ -292,23 +389,71 @@ const ValidateEmail = () => {
                     />
                   </div>
                   
-                  <div className="rounded-lg bg-muted p-4">
-                    <h4 className="font-medium mb-2">Summary</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {validationResult.isValid 
-                        ? "This email meets our quality standards for customer communication. It uses appropriate structure, tone, and contains all necessary information." 
-                        : "This email needs improvement in some areas to meet our quality standards for customer communication."
-                      }
-                    </p>
-                    {validationResult.suggestions && validationResult.suggestions.length > 0 && (
-                      <div className="mt-3 flex items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2 flex items-center">
+                        <span>Spelling & Grammar</span>
+                        <span className={cn("ml-auto px-2 py-0.5 rounded text-white text-xs", 
+                          getScoreColor(validationResult.details.spelling.score * 4))}>
+                          {getCriteriaScore(validationResult.details.spelling.score)}/2.5
+                        </span>
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {validationResult.details.spelling.feedback}
+                      </p>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2 flex items-center">
+                        <span>Tone & Empathy</span>
+                        <span className={cn("ml-auto px-2 py-0.5 rounded text-white text-xs", 
+                          getScoreColor(validationResult.details.tone.score * 4))}>
+                          {getCriteriaScore(validationResult.details.tone.score)}/2.5
+                        </span>
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {validationResult.details.tone.feedback}
+                      </p>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2 flex items-center">
+                        <span>Welcome & Sign Off</span>
+                        <span className={cn("ml-auto px-2 py-0.5 rounded text-white text-xs", 
+                          getScoreColor(validationResult.details.structure.score * 4))}>
+                          {getCriteriaScore(validationResult.details.structure.score)}/2.5
+                        </span>
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {validationResult.details.structure.feedback}
+                      </p>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2 flex items-center">
+                        <span>Template Consistency</span>
+                        <span className={cn("ml-auto px-2 py-0.5 rounded text-white text-xs", 
+                          getScoreColor(validationResult.details.similarity.score * 4))}>
+                          {getCriteriaScore(validationResult.details.similarity.score)}/2.5
+                        </span>
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {validationResult.details.similarity.feedback}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {validationResult.suggestions && validationResult.suggestions.length > 0 && (
+                    <div className="rounded-lg bg-muted p-4">
+                      <h4 className="font-medium mb-2">Key Improvement Area</h4>
+                      <div className="flex items-start">
                         <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
                         <p className="text-sm text-muted-foreground">
                           {validationResult.suggestions[0]}
                         </p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
