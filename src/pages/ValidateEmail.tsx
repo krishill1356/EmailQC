@@ -288,7 +288,6 @@ const ValidateEmail = () => {
                     <Progress 
                       value={validationResult.totalScore * 10} 
                       max={100}
-                      className="h-2"
                       className={cn("h-2", getScoreColor(validationResult.totalScore))}
                     />
                   </div>

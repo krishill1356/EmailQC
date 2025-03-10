@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Mail, CheckCircle, XCircle, Search, Trash2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,6 @@ const ValidationHistory = () => {
   }, []);
 
   useEffect(() => {
-    // Apply search filter
     if (searchTerm.trim() === '') {
       setFilteredHistory(history);
     } else {
@@ -47,7 +45,6 @@ const ValidationHistory = () => {
     setLoading(true);
     try {
       const data = await getValidationHistory();
-      // Sort by timestamp (newest first)
       const sortedData = data.sort((a, b) => 
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
@@ -131,7 +128,6 @@ const ValidationHistory = () => {
           )}
         </div>
 
-        {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
@@ -143,7 +139,6 @@ const ValidationHistory = () => {
           />
         </div>
 
-        {/* History List */}
         <Card>
           <CardHeader>
             <CardTitle>Email Validation Records</CardTitle>
@@ -254,7 +249,6 @@ const ValidationHistory = () => {
         </Card>
       </div>
 
-      {/* Details Dialog */}
       {selectedItem && (
         <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
           <DialogContent className="max-w-2xl">
@@ -304,34 +298,17 @@ const ValidationHistory = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Structure Check</h4>
+                  <h4 className="font-medium mb-3">Spelling Check</h4>
                   <div className="flex items-center">
-                    {selectedItem.result.details.structure ? (
+                    {selectedItem.result.details.spelling.score > 1.25 ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Proper structure</span>
+                        <span>Good spelling and grammar</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Improper structure</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Clarity Check</h4>
-                  <div className="flex items-center">
-                    {selectedItem.result.details.clarity ? (
-                      <>
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Clear and concise</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Lacks clarity</span>
+                        <span>Needs spelling improvement</span>
                       </>
                     )}
                   </div>
@@ -340,83 +317,49 @@ const ValidationHistory = () => {
                 <div className="p-4 rounded-md bg-muted">
                   <h4 className="font-medium mb-3">Tone Check</h4>
                   <div className="flex items-center">
-                    {selectedItem.result.details.tone ? (
+                    {selectedItem.result.details.tone.score > 1.25 ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Professional tone</span>
+                        <span>Appropriate tone</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Inappropriate tone</span>
+                        <span>Tone needs improvement</span>
                       </>
                     )}
                   </div>
                 </div>
                 
                 <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Grammar Check</h4>
+                  <h4 className="font-medium mb-3">Structure Check</h4>
                   <div className="flex items-center">
-                    {selectedItem.result.details.grammar ? (
+                    {selectedItem.result.details.structure.score > 1.25 ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Correct grammar</span>
+                        <span>Good structure</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Grammar issues</span>
+                        <span>Structure needs improvement</span>
                       </>
                     )}
                   </div>
                 </div>
-
+                
                 <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Completeness Check</h4>
+                  <h4 className="font-medium mb-3">Template Consistency</h4>
                   <div className="flex items-center">
-                    {selectedItem.result.details.completeness ? (
+                    {selectedItem.result.details.similarity.score > 1.25 ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Complete information</span>
+                        <span>Consistent with templates</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Missing information</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Personalization Check</h4>
-                  <div className="flex items-center">
-                    {selectedItem.result.details.personalization ? (
-                      <>
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Well personalized</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Lacks personalization</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Branding Check</h4>
-                  <div className="flex items-center">
-                    {selectedItem.result.details.branding ? (
-                      <>
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Consistent branding</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Inconsistent branding</span>
+                        <span>Inconsistent with templates</span>
                       </>
                     )}
                   </div>
