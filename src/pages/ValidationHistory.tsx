@@ -304,68 +304,119 @@ const ValidationHistory = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Format Check</h4>
+                  <h4 className="font-medium mb-3">Structure Check</h4>
                   <div className="flex items-center">
-                    {selectedItem.result.details.format ? (
+                    {selectedItem.result.details.structure ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Valid format</span>
+                        <span>Proper structure</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Invalid format</span>
+                        <span>Improper structure</span>
                       </>
                     )}
                   </div>
                 </div>
                 
                 <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">DNS Check</h4>
+                  <h4 className="font-medium mb-3">Clarity Check</h4>
                   <div className="flex items-center">
-                    {selectedItem.result.details.dns ? (
+                    {selectedItem.result.details.clarity ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Valid domain</span>
+                        <span>Clear and concise</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Invalid domain</span>
+                        <span>Lacks clarity</span>
                       </>
                     )}
                   </div>
                 </div>
                 
                 <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Disposable Check</h4>
+                  <h4 className="font-medium mb-3">Tone Check</h4>
                   <div className="flex items-center">
-                    {!selectedItem.result.details.disposable ? (
+                    {selectedItem.result.details.tone ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>Not disposable</span>
+                        <span>Professional tone</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Disposable email</span>
+                        <span>Inappropriate tone</span>
                       </>
                     )}
                   </div>
                 </div>
                 
                 <div className="p-4 rounded-md bg-muted">
-                  <h4 className="font-medium mb-3">Spam Check</h4>
+                  <h4 className="font-medium mb-3">Grammar Check</h4>
                   <div className="flex items-center">
-                    {!selectedItem.result.details.spam ? (
+                    {selectedItem.result.details.grammar ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span>No spam patterns</span>
+                        <span>Correct grammar</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span>Spam patterns detected</span>
+                        <span>Grammar issues</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-md bg-muted">
+                  <h4 className="font-medium mb-3">Completeness Check</h4>
+                  <div className="flex items-center">
+                    {selectedItem.result.details.completeness ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Complete information</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                        <span>Missing information</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-md bg-muted">
+                  <h4 className="font-medium mb-3">Personalization Check</h4>
+                  <div className="flex items-center">
+                    {selectedItem.result.details.personalization ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Well personalized</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                        <span>Lacks personalization</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-md bg-muted">
+                  <h4 className="font-medium mb-3">Branding Check</h4>
+                  <div className="flex items-center">
+                    {selectedItem.result.details.branding ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Consistent branding</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                        <span>Inconsistent branding</span>
                       </>
                     )}
                   </div>
